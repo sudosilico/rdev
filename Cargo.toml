@@ -16,10 +16,12 @@ license = "MIT"
 [dependencies]
 serde = {version = "1.0", features = ["derive"], optional=true}
 lazy_static = "1.4"
+specta = { version = "1.0.5", features = ["typescript"], optional=true }
 
 [features]
 serialize = ["serde"]
 unstable_grab = ["evdev-rs", "epoll", "inotify"]
+typescript = ["dep:specta"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.22"

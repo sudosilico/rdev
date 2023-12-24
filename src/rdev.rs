@@ -3,6 +3,9 @@ use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 use std::{fmt, fmt::Display};
 
+#[cfg(feature = "typescript")]
+use specta::Type;
+
 // /// Callback type to send to listen function.
 // pub type Callback = dyn FnMut(Event) -> ();
 
@@ -98,6 +101,7 @@ impl std::error::Error for SimulateError {}
 /// Careful, on Windows KpReturn does not exist, it' s strictly equivalent to Return, also Keypad keys
 /// get modified if NumLock is Off and ARE pagedown and so on.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "typescript", derive(Type))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum Key {
     /// Alt key on Linux and Windows (option key on macOS)
@@ -215,6 +219,7 @@ pub enum Key {
 /// Some mice have more than 3 buttons. These are not defined, and different
 /// OSs will give different `Button::Unknown` values.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "typescript", derive(Type))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum Button {
     Left,
@@ -226,6 +231,7 @@ pub enum Button {
 /// In order to manage different OSs, the current EventType choices are a mix and
 /// match to account for all possible events.
 #[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(feature = "typescript", derive(Type))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum EventType {
     /// The keys correspond to a standard qwerty layout, they don't correspond
@@ -257,6 +263,7 @@ pub enum EventType {
 /// Caveat: Dead keys don't function on Linux(X11) yet. You will receive None for
 /// a dead key, and the raw letter instead of accentuated letter.
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "typescript", derive(Type))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub struct Event {
     pub time: SystemTime,
