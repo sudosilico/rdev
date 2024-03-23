@@ -1,10 +1,14 @@
 #[cfg(feature = "serialize")]
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use std::time::SystemTime;
 use std::{fmt, fmt::Display};
 
 #[cfg(feature = "typescript")]
 use specta::Type;
+
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
 
 // /// Callback type to send to listen function.
 // pub type Callback = dyn FnMut(Event) -> ();
@@ -100,7 +104,7 @@ impl std::error::Error for SimulateError {}
 /// a different value too.
 /// Careful, on Windows KpReturn does not exist, it' s strictly equivalent to Return, also Keypad keys
 /// get modified if NumLock is Off and ARE pagedown and so on.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[cfg_attr(feature = "typescript", derive(Type))]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 pub enum Key {
@@ -213,6 +217,247 @@ pub enum Key {
     KpDelete,
     Function,
     Unknown(u32),
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParseKeyError;
+
+impl FromStr for Key {
+    type Err = ParseKeyError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Alt" => Key::Alt,
+            "AltGr" => Key::AltGr,
+            "Backspace" => Key::Backspace,
+            "CapsLock" => Key::CapsLock,
+            "ControlLeft" => Key::ControlLeft,
+            "ControlRight" => Key::ControlRight,
+            "Delete" => Key::Delete,
+            "DownArrow" => Key::DownArrow,
+            "End" => Key::End,
+            "Escape" => Key::Escape,
+            "F1" => Key::F1,
+            "F10" => Key::F10,
+            "F11" => Key::F11,
+            "F12" => Key::F12,
+            "F2" => Key::F2,
+            "F3" => Key::F3,
+            "F4" => Key::F4,
+            "F5" => Key::F5,
+            "F6" => Key::F6,
+            "F7" => Key::F7,
+            "F8" => Key::F8,
+            "F9" => Key::F9,
+            "Home" => Key::Home,
+            "LeftArrow" => Key::LeftArrow,
+            "MetaLeft" => Key::MetaLeft,
+            "MetaRight" => Key::MetaRight,
+            "PageDown" => Key::PageDown,
+            "PageUp" => Key::PageUp,
+            "Return" => Key::Return,
+            "RightArrow" => Key::RightArrow,
+            "ShiftLeft" => Key::ShiftLeft,
+            "ShiftRight" => Key::ShiftRight,
+            "Space" => Key::Space,
+            "Tab" => Key::Tab,
+            "UpArrow" => Key::UpArrow,
+            "PrintScreen" => Key::PrintScreen,
+            "ScrollLock" => Key::ScrollLock,
+            "Pause" => Key::Pause,
+            "NumLock" => Key::NumLock,
+            "BackQuote" => Key::BackQuote,
+            "Num1" => Key::Num1,
+            "Num2" => Key::Num2,
+            "Num3" => Key::Num3,
+            "Num4" => Key::Num4,
+            "Num5" => Key::Num5,
+            "Num6" => Key::Num6,
+            "Num7" => Key::Num7,
+            "Num8" => Key::Num8,
+            "Num9" => Key::Num9,
+            "Num0" => Key::Num0,
+            "Minus" => Key::Minus,
+            "Equal" => Key::Equal,
+            "KeyQ" => Key::KeyQ,
+            "KeyW" => Key::KeyW,
+            "KeyE" => Key::KeyE,
+            "KeyR" => Key::KeyR,
+            "KeyT" => Key::KeyT,
+            "KeyY" => Key::KeyY,
+            "KeyU" => Key::KeyU,
+            "KeyI" => Key::KeyI,
+            "KeyO" => Key::KeyO,
+            "KeyP" => Key::KeyP,
+            "LeftBracket" => Key::LeftBracket,
+            "RightBracket" => Key::RightBracket,
+            "KeyA" => Key::KeyA,
+            "KeyS" => Key::KeyS,
+            "KeyD" => Key::KeyD,
+            "KeyF" => Key::KeyF,
+            "KeyG" => Key::KeyG,
+            "KeyH" => Key::KeyH,
+            "KeyJ" => Key::KeyJ,
+            "KeyK" => Key::KeyK,
+            "KeyL" => Key::KeyL,
+            "SemiColon" => Key::SemiColon,
+            "Quote" => Key::Quote,
+            "BackSlash" => Key::BackSlash,
+            "IntlBackslash" => Key::IntlBackslash,
+            "KeyZ" => Key::KeyZ,
+            "KeyX" => Key::KeyX,
+            "KeyC" => Key::KeyC,
+            "KeyV" => Key::KeyV,
+            "KeyB" => Key::KeyB,
+            "KeyN" => Key::KeyN,
+            "KeyM" => Key::KeyM,
+            "Comma" => Key::Comma,
+            "Dot" => Key::Dot,
+            "Slash" => Key::Slash,
+            "Insert" => Key::Insert,
+            "KpReturn" => Key::KpReturn,
+            "KpMinus" => Key::KpMinus,
+            "KpPlus" => Key::KpPlus,
+            "KpMultiply" => Key::KpMultiply,
+            "KpDivide" => Key::KpDivide,
+            "Kp0" => Key::Kp0,
+            "Kp1" => Key::Kp1,
+            "Kp2" => Key::Kp2,
+            "Kp3" => Key::Kp3,
+            "Kp4" => Key::Kp4,
+            "Kp5" => Key::Kp5,
+            "Kp6" => Key::Kp6,
+            "Kp7" => Key::Kp7,
+            "Kp8" => Key::Kp8,
+            "Kp9" => Key::Kp9,
+            "KpDelete" => Key::KpDelete,
+            "Function" => Key::Function,
+            unknown => {
+                if let Some(id) = unknown.strip_prefix("Unknown(") {
+                    if let Some(id) = id.strip_suffix(')') {
+                        if let Ok(id) = id.parse() {
+                            return Ok(Key::Unknown(id));
+                        }
+                    }
+                }
+
+                return Err(ParseKeyError);
+            }
+        })
+    }
+}
+
+impl ToString for Key {
+    fn to_string(&self) -> String {
+        match self {
+            Key::Alt => "Alt".into(),
+            Key::AltGr => "AltGr".into(),
+            Key::Backspace => "Backspace".into(),
+            Key::CapsLock => "CapsLock".into(),
+            Key::ControlLeft => "ControlLeft".into(),
+            Key::ControlRight => "ControlRight".into(),
+            Key::Delete => "Delete".into(),
+            Key::DownArrow => "DownArrow".into(),
+            Key::End => "End".into(),
+            Key::Escape => "Escape".into(),
+            Key::F1 => "F1".into(),
+            Key::F10 => "F10".into(),
+            Key::F11 => "F11".into(),
+            Key::F12 => "F12".into(),
+            Key::F2 => "F2".into(),
+            Key::F3 => "F3".into(),
+            Key::F4 => "F4".into(),
+            Key::F5 => "F5".into(),
+            Key::F6 => "F6".into(),
+            Key::F7 => "F7".into(),
+            Key::F8 => "F8".into(),
+            Key::F9 => "F9".into(),
+            Key::Home => "Home".into(),
+            Key::LeftArrow => "LeftArrow".into(),
+            Key::MetaLeft => "MetaLeft".into(),
+            Key::MetaRight => "MetaRight".into(),
+            Key::PageDown => "PageDown".into(),
+            Key::PageUp => "PageUp".into(),
+            Key::Return => "Return".into(),
+            Key::RightArrow => "RightArrow".into(),
+            Key::ShiftLeft => "ShiftLeft".into(),
+            Key::ShiftRight => "ShiftRight".into(),
+            Key::Space => "Space".into(),
+            Key::Tab => "Tab".into(),
+            Key::UpArrow => "UpArrow".into(),
+            Key::PrintScreen => "PrintScreen".into(),
+            Key::ScrollLock => "ScrollLock".into(),
+            Key::Pause => "Pause".into(),
+            Key::NumLock => "NumLock".into(),
+            Key::BackQuote => "BackQuote".into(),
+            Key::Num1 => "Num1".into(),
+            Key::Num2 => "Num2".into(),
+            Key::Num3 => "Num3".into(),
+            Key::Num4 => "Num4".into(),
+            Key::Num5 => "Num5".into(),
+            Key::Num6 => "Num6".into(),
+            Key::Num7 => "Num7".into(),
+            Key::Num8 => "Num8".into(),
+            Key::Num9 => "Num9".into(),
+            Key::Num0 => "Num0".into(),
+            Key::Minus => "Minus".into(),
+            Key::Equal => "Equal".into(),
+            Key::KeyQ => "KeyQ".into(),
+            Key::KeyW => "KeyW".into(),
+            Key::KeyE => "KeyE".into(),
+            Key::KeyR => "KeyR".into(),
+            Key::KeyT => "KeyT".into(),
+            Key::KeyY => "KeyY".into(),
+            Key::KeyU => "KeyU".into(),
+            Key::KeyI => "KeyI".into(),
+            Key::KeyO => "KeyO".into(),
+            Key::KeyP => "KeyP".into(),
+            Key::LeftBracket => "LeftBracket".into(),
+            Key::RightBracket => "RightBracket".into(),
+            Key::KeyA => "KeyA".into(),
+            Key::KeyS => "KeyS".into(),
+            Key::KeyD => "KeyD".into(),
+            Key::KeyF => "KeyF".into(),
+            Key::KeyG => "KeyG".into(),
+            Key::KeyH => "KeyH".into(),
+            Key::KeyJ => "KeyJ".into(),
+            Key::KeyK => "KeyK".into(),
+            Key::KeyL => "KeyL".into(),
+            Key::SemiColon => "SemiColon".into(),
+            Key::Quote => "Quote".into(),
+            Key::BackSlash => "BackSlash".into(),
+            Key::IntlBackslash => "IntlBackslash".into(),
+            Key::KeyZ => "KeyZ".into(),
+            Key::KeyX => "KeyX".into(),
+            Key::KeyC => "KeyC".into(),
+            Key::KeyV => "KeyV".into(),
+            Key::KeyB => "KeyB".into(),
+            Key::KeyN => "KeyN".into(),
+            Key::KeyM => "KeyM".into(),
+            Key::Comma => "Comma".into(),
+            Key::Dot => "Dot".into(),
+            Key::Slash => "Slash".into(),
+            Key::Insert => "Insert".into(),
+            Key::KpReturn => "KpReturn".into(),
+            Key::KpMinus => "KpMinus".into(),
+            Key::KpPlus => "KpPlus".into(),
+            Key::KpMultiply => "KpMultiply".into(),
+            Key::KpDivide => "KpDivide".into(),
+            Key::Kp0 => "Kp0".into(),
+            Key::Kp1 => "Kp1".into(),
+            Key::Kp2 => "Kp2".into(),
+            Key::Kp3 => "Kp3".into(),
+            Key::Kp4 => "Kp4".into(),
+            Key::Kp5 => "Kp5".into(),
+            Key::Kp6 => "Kp6".into(),
+            Key::Kp7 => "Kp7".into(),
+            Key::Kp8 => "Kp8".into(),
+            Key::Kp9 => "Kp9".into(),
+            Key::KpDelete => "KpDelete".into(),
+            Key::Function => "Function".into(),
+            Key::Unknown(id) => format!("Unknown({})", id),
+        }
+    }
 }
 
 /// Standard mouse buttons
